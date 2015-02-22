@@ -1,0 +1,10 @@
+var config = {
+    dbConnection: {
+        host: '',
+        user: '',
+        password: '',
+        database: ''
+    }
+};
+
+module.exports = config;
