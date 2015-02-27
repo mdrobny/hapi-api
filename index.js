@@ -1,3 +1,4 @@
+'use strict';
 var Hapi = require('hapi');
 var Good = require('good');
 var config = require('./config/global');
