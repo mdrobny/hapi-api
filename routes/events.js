@@ -43,7 +43,7 @@ var Events = (function() {
                     reply(Boom.create(503, 'DB error'));
                 });
         },
-        delete: function(req, reply) {
+        remove: function(req, reply) {
             var id = req.params.id;
             db.knex.del().from(table).where({id: id})
                 .then(function(affectedRows) {
@@ -57,8 +57,16 @@ var Events = (function() {
         update: function(req, reply) {
             var id = req.params.id,
                 object = req.payload;
+            if (_.isEmpty(object)) {
+                reply(Boom.notAcceptable());
+                return;
+            }
             db.knex(table).update(object).where({id: id})
                 .then(function(affectedRows) {
+                    if (affectedRows === 0) {
+                        reply(Boom.notFound('Event with id: ' + id + ' not found')).code(404);
+                        return;
+                    }
                     reply({updatedRows: affectedRows}).code(200);
                 })
                 .catch(function(err) {
@@ -104,7 +112,7 @@ var plugin = {
         server.route({
             method: 'DELETE',
             path: '/api/v1/events/{id}',
-            handler: Events.delete,
+            handler: Events.remove,
             config: {
                 validate: {
                     params: {
@@ -119,12 +127,12 @@ var plugin = {
             handler: Events.update,
             config: {
                 validate: {
+                    params: {
+                        id: Joi.number().integer().min(0)
+                    },
                     payload: {
                         name: Joi.string().min(2),
                         place: Joi.string().min(1)
-                    },
-                    params: {
-                        id: Joi.number().integer().min(0)
                     }
                 }
             }
