@@ -47,6 +47,10 @@ var Events = (function() {
             var id = req.params.id;
             db.knex.del().from(table).where({id: id})
                 .then(function(affectedRows) {
+                    if (affectedRows === 0) {
+                        reply(Boom.notFound('Event with id: ' + id + ' not found'));
+                        return;
+                    }
                     reply({deletedRows: affectedRows}).code(200);
                 })
                 .catch(function(err) {
@@ -64,7 +68,7 @@ var Events = (function() {
             db.knex(table).update(object).where({id: id})
                 .then(function(affectedRows) {
                     if (affectedRows === 0) {
-                        reply(Boom.notFound('Event with id: ' + id + ' not found')).code(404);
+                        reply(Boom.notFound('Event with id: ' + id + ' not found'));
                         return;
                     }
                     reply({updatedRows: affectedRows}).code(200);
