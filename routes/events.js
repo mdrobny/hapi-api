@@ -8,6 +8,10 @@ var Events = (function() {
     var table = 'events';
     return {
         getAll: function(req, reply) {
+            var limit = req.params.limit,
+                offset = req.params.offset;
+            console.log('limit', limit);
+            console.log('offset', offset);
             db.knex.select().from(table)
                 .then(function(rows) {
                     reply(rows);
@@ -85,8 +89,16 @@ var plugin = {
     register: function(server, options, next) {
         server.route({
             method: 'GET',
-            path: '/api/v1/events',
-            handler: Events.getAll
+            path: '/api/v1/events/',
+            handler: Events.getAll,
+            config: {
+                validate: {
+                    params: {
+                        limit: Joi.number().integer().min(1).default(9),
+                        offset: Joi.number().integer().min(0).default(0)
+                    }
+                }
+            }
         });
         server.route({
             method: 'GET',
