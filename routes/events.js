@@ -5,14 +5,40 @@ var _ = require('lodash');
 var db = require('./../db');
 
 var Events = (function() {
-    var table = 'events';
+    var table = 'events',
+        columns = ['id','name','place'],
+        prepareSort = function(sort) {
+            var direction,
+                sortDefault = 'id ASC';
+            if(sort) {
+                direction = (_.startsWith(sort, '-')) ? 'DESC' : 'ASC';
+                sort = _.trimLeft(sort, '-+');
+                if(_.indexOf(columns, sort) > -1) {
+                    sort += ' '+ direction;
+                } else {
+                    sort = sortDefault;
+                }
+            } else {
+                sort = sortDefault;
+            }
+            return sort;
+        },
+        prepareFields = function(fields) {
+            return ((fields) ? fields.split(',') : '*');
+        };
     return {
         getAll: function(req, reply) {
-            var limit = req.params.limit,
-                offset = req.params.offset;
-            console.log('limit', limit);
-            console.log('offset', offset);
-            db.knex.select().from(table)
+            var sort = req.query.sort,
+                limit = req.query.limit,
+                offset = req.query.offset,
+                fields = req.query.fields;
+            sort = prepareSort(sort);
+            fields = prepareFields(fields);
+            db.knex.select(fields)
+                .from(table)
+                .orderByRaw(sort)
+                .limit(limit).offset(offset)
+                .debug()
                 .then(function(rows) {
                     reply(rows);
                 })
@@ -89,13 +115,15 @@ var plugin = {
     register: function(server, options, next) {
         server.route({
             method: 'GET',
-            path: '/api/v1/events/',
+            path: '/api/v1/events',
             handler: Events.getAll,
             config: {
                 validate: {
-                    params: {
+                    query: {
+                        sort: Joi.string().min(2).regex(/^[\w\-+]+$/),
+                        offset: Joi.number().integer().min(0).default(0),
                         limit: Joi.number().integer().min(1).default(9),
-                        offset: Joi.number().integer().min(0).default(0)
+                        fields: Joi.string().regex(/^[\w,]+$/)
                     }
                 }
             }
