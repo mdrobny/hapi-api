@@ -3,37 +3,21 @@ var Boom = require('boom');
 var Joi = require('joi');
 var _ = require('lodash');
 var db = require('./../db');
+var queryParser = require('../utils/hapi-query-parser')('mysql');
 
 var Events = (function() {
     var table = 'events',
-        columns = ['id','name','place'],
-        prepareSort = function(sort) {
-            var direction,
-                sortDefault = 'id ASC';
-            if(sort) {
-                direction = (_.startsWith(sort, '-')) ? 'DESC' : 'ASC';
-                sort = _.trimLeft(sort, '-+');
-                if(_.indexOf(columns, sort) > -1) {
-                    sort += ' '+ direction;
-                } else {
-                    sort = sortDefault;
-                }
-            } else {
-                sort = sortDefault;
-            }
-            return sort;
-        },
-        prepareFields = function(fields) {
-            return ((fields) ? fields.split(',') : '*');
-        };
+        columns = ['id','name','place']
     return {
         getAll: function(req, reply) {
             var sort = req.query.sort,
                 limit = req.query.limit,
                 offset = req.query.offset,
                 fields = req.query.fields;
-            sort = prepareSort(sort);
-            fields = prepareFields(fields);
+            sort = queryParser.sortParse(sort, columns);
+            sort = queryParser.getSort(sort);
+            fields = queryParser.fieldsParse(fields, columns);
+            fields = queryParser.getFields(fields);
             db.knex.select(fields)
                 .from(table)
                 .orderByRaw(sort)
@@ -120,7 +104,7 @@ var plugin = {
             config: {
                 validate: {
                     query: {
-                        sort: Joi.string().min(2).regex(/^[\w\-+]+$/),
+                        sort: Joi.string().min(2).regex(/^[\w\-+,]+$/),
                         offset: Joi.number().integer().min(0).default(0),
                         limit: Joi.number().integer().min(1).default(9),
                         fields: Joi.string().regex(/^[\w,]+$/)
