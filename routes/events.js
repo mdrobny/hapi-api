@@ -3,21 +3,22 @@ var Boom = require('boom');
 var Joi = require('joi');
 var _ = require('lodash');
 var db = require('./../db');
-var queryParser = require('../utils/hapi-query-parser')('mysql');
+var queryParser = require('../utils/query-parser')('mysql');
 
 var Events = (function() {
     var table = 'events',
-        columns = ['id','name','place']
+        columns = ['id', 'name', 'place'];
     return {
         getAll: function(req, reply) {
             var sort = req.query.sort,
                 limit = req.query.limit,
                 offset = req.query.offset,
                 fields = req.query.fields;
-            sort = queryParser.sortParse(sort, columns);
-            sort = queryParser.getSort(sort);
-            fields = queryParser.fieldsParse(fields, columns);
-            fields = queryParser.getFields(fields);
+            sort = queryParser.parseSortString(sort, columns);
+            fields = queryParser.parseFieldsString(fields, columns);
+
+            sort = queryParser.getSortQuery(sort);
+            fields = queryParser.getFieldsQuery(fields);
             db.knex.select(fields)
                 .from(table)
                 .orderByRaw(sort)
@@ -104,10 +105,10 @@ var plugin = {
             config: {
                 validate: {
                     query: {
-                        sort: Joi.string().min(2).regex(/^[\w\-+,]+$/),
+                        sort: Joi.string().min(2).regex(queryParser.getSortRegex()),
                         offset: Joi.number().integer().min(0).default(0),
                         limit: Joi.number().integer().min(1).default(9),
-                        fields: Joi.string().regex(/^[\w,]+$/)
+                        fields: Joi.string().regex(queryParser.getFieldsRegex())
                     }
                 }
             }
