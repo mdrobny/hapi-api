@@ -1,6 +1,7 @@
 'use strict';
 var Hapi = require('hapi');
 var Good = require('good');
+var Bunyan = require('bunyan');
 var config = require('./config/global');
 
 var server = new Hapi.Server();
@@ -19,14 +20,11 @@ server.register({
 });
 
 server.register({
-    register: Good,
+    register: require('hapi-bunyan'),
     options: {
-        reporters: [{
-            reporter: require('good-console'),
-            args:[{ log: '*', response: '*' }]
-        }]
+        logger: Bunyan.createLogger({name: 'server', level: 'info'})
     }
-}, function (err) {
+}, function(err) {
     if (err) {
         throw err;
     }
@@ -35,5 +33,23 @@ server.register({
         server.log('info', 'Server running at: ' + server.info.uri);
     });
 });
+
+//server.register({
+//    register: Good,
+//    options: {
+//        reporters: [{
+//            reporter: require('good-console'),
+//            args:[{ log: '*', response: '*' }]
+//        }]
+//    }
+//}, function (err) {
+//    if (err) {
+//        throw err;
+//    }
+//
+//    server.start(function () {
+//        server.log('info', 'Server running at: ' + server.info.uri);
+//    });
+//});
 
 module.exports = server;

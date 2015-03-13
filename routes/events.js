@@ -25,6 +25,8 @@ var Events = (function() {
                 .limit(limit).offset(offset)
                 .debug()
                 .then(function(rows) {
+                    req.log.info('test msg');
+                    req.log.info(rows);
                     reply(rows);
                 })
                 .catch(function(err) {

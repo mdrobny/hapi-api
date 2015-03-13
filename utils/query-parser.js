@@ -7,26 +7,28 @@ var utils = {
         directionDesc: 'DESC',
         getSortQuery: function(params) {
             var orderBy = '';
-            params.forEach(function(param) {
-                _.forOwn(param, function(value, key) { orderBy += key + ' ' + value + ','; });
-            });
-            orderBy = _.trimRight(orderBy, ',');
+            if (params.length) {
+                params.forEach(function(param) {
+                    _.forOwn(param, function(value, key) { orderBy += key + ' ' + value + ','; });
+                });
+                orderBy = _.trimRight(orderBy, ',');
+            } else {
+                orderBy = 'id';
+            }
             return orderBy;
         },
         getFieldsQuery: function(fields) {
-            return fields;
+            return (fields.length) ? fields : '*';
         }
     }
 };
 
 module.exports = function(dbType) {
     if (!dbType) {
-        console.log('Query parser error:', 'DB type not passed');
-        return;
+        return new Error('Query parser error: DB type not passed');
     }
     if (!_.has(utils, dbType)) {
-        console.log('Query parser error:', 'DB type not defined in utils');
-        return;
+        return new Error('Query parser error: DB type not defined in utils');
     }
     return {
         /**
