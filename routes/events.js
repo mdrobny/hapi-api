@@ -35,8 +35,15 @@ var Events = (function() {
                 });
         },
         get: function(req, reply) {
-            var id = req.params.id;
-            db.knex.select().from(table).where({id: id})
+            var id = req.params.id,
+                where = {};
+                where[table + '.id'] = id;
+            db.knex.select()
+                .column(table + '.*', 'p.name as placeName', 'p.address1')
+                .from(table)
+                .leftJoin('places as p', table + '.placeId', 'p.id')
+                .where(where)
+                .debug()
                 .then(function(rows) {
                     if (rows.length === 1) {
                         reply(rows[0]);
