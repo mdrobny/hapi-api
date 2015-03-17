@@ -8,18 +8,6 @@ var queryParser = require('./../utils/query-parser')('mysql');
 var Events = (function() {
     var table = 'events',
         columns = ['id', 'name', 'place'];
-
-    var Event = db.bs.Model.extend({
-        tableName: 'events',
-        defaults: {
-            id: undefined,
-            name: '',
-            placeId: undefined
-        }
-    });
-    var Events = db.bs.Collection.extend({
-        model: Event
-    });
     return {
         getAll: function(req, reply) {
             var sort = req.query.sort,
@@ -37,6 +25,8 @@ var Events = (function() {
                 .limit(limit).offset(offset)
                 .debug()
                 .then(function(rows) {
+                    req.log.info('test msg');
+                    req.log.info(rows);
                     reply(rows);
                 })
                 .catch(function(err) {
@@ -46,22 +36,23 @@ var Events = (function() {
         },
         get: function(req, reply) {
             var id = req.params.id,
-                Model = new Event({id: id}),
-                options = {
-                    columns: ['id', 'name'],
-                    debug: true
-                };
-            Model.fetch(options)
-                .then(function(model) {
-                    if (model) {
-                        req.log.info(model);
-                        reply(model);
+                where = {};
+                where[table + '.id'] = id;
+            db.knex.select()
+                .column(table + '.*', 'p.name as placeName', 'p.address1')
+                .from(table)
+                .leftJoin('places as p', table + '.placeId', 'p.id')
+                .where(where)
+                .debug()
+                .then(function(rows) {
+                    if (rows.length === 1) {
+                        reply(rows[0]);
                     } else {
                         reply(Boom.notFound('Event with id: ' + id + ' not found'));
                     }
                 })
                 .catch(function(err) {
-                    req.log.info('DB error: ' + err.stack);
+                    console.log('DB error: ' + err.stack);
                     reply(Boom.create(503, 'DB error'));
                 });
         },

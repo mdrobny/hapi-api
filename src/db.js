@@ -6,16 +6,9 @@ var knex = require('knex')({
     connection: config.dbConnection
 });
 
-//var connection = mysql.createConnection(config.dbConnection);
-
-//connection.connect(function(err) {
-//    if (err) {
-//        console.log('Db connection error', err.stack);
-//        return;
-//    }
-//    console.log('Connection to db established as id: '+ connection.threadId);
-//});
+var bookshelf = require('bookshelf')(knex);
 
 module.exports = {
-    knex: knex
+    knex: knex,
+    bs: bookshelf
 };
