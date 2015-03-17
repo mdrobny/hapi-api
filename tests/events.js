@@ -2,7 +2,7 @@
 var Lab = require('lab');
 var lab = exports.lab = Lab.script();
 var Code = require('code');
-var server = require('../index.js');
+var server = require('../src/index.js');
 
 var describe = lab.describe;
 var it = lab.it;

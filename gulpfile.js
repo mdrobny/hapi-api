@@ -6,7 +6,7 @@ var gulp = require('gulp'),
 
 gulp.task('developServer', function () {
     nodemon({
-        script: 'index.js',
+        script: 'src/index.js',
         ext: 'js',
         ignore: ['node_modules/'],
         nodeArgs: ['--debug=8090']

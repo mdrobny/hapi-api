@@ -3,7 +3,7 @@ var Boom = require('boom');
 var Joi = require('joi');
 var _ = require('lodash');
 var db = require('./../db');
-var queryParser = require('../utils/query-parser')('mysql');
+var queryParser = require('./../utils/query-parser')('mysql');
 
 var Events = (function() {
     var table = 'events',
