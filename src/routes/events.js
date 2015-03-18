@@ -25,19 +25,26 @@ var Events = (function() {
             var sort = req.query.sort,
                 limit = req.query.limit,
                 offset = req.query.offset,
-                fields = req.query.fields;
+                fields = req.query.fields,
+                Collection = new Events();
+
             sort = queryParser.parseSortString(sort, columns);
             fields = queryParser.parseFieldsString(fields, columns);
 
             sort = queryParser.getSortQuery(sort);
             fields = queryParser.getFieldsQuery(fields);
-            db.knex.select(fields)
-                .from(table)
-                .orderByRaw(sort)
-                .limit(limit).offset(offset)
-                .debug()
-                .then(function(rows) {
-                    reply(rows);
+            var options = {
+                columns: fields,
+                debug: true
+            };
+            Collection.query(function(qb) {
+                qb.limit(limit)
+                    .offset(offset)
+                    .orderByRaw(sort);
+            })
+                .fetch(options)
+                .then(function(collection) {
+                    reply(collection);
                 })
                 .catch(function(err) {
                     console.log('DB error: ' + err.stack);
@@ -66,13 +73,15 @@ var Events = (function() {
                 });
         },
         create: function(req, reply) {
-            var object = req.payload;
-            db.knex.insert(object).into(table)
-                .then(function(rows) {
-                    reply({insertedId: rows[0]}).code(201);
+            var object = req.payload,
+                model = new Event(object);
+            model.save()
+                .then(function(model) {
+                    req.log.info(model);
+                    reply(model).code(201);
                 })
                 .catch(function(err) {
-                    console.log('DB error: ' + err.stack);
+                    req.log.info(err);
                     reply(Boom.create(503, 'DB error'));
                 });
         },
@@ -151,7 +160,7 @@ var plugin = {
                 validate: {
                     payload: {
                         name: Joi.string().min(2).required(),
-                        place: Joi.string().min(1).required()
+                        placeId: Joi.number().integer().min(1).required()
                     }
                 }
             }
